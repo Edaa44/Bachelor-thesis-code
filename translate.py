@@ -4,6 +4,9 @@
 
 from curses import raw
 import sys
+sys.argv[1:] = ["dummy_domain.pddl", "dummy_task.pddl"]
+import os
+import re
 from pathlib import Path
 from numeric_ir import task
 from translate_pipeline import compile_ir_task
@@ -1296,28 +1299,76 @@ def dump_statistics(sas_task):
         print("Translator peak memory: %d KB" % peak_memory)
 
 
-def main():
+def instance_name_from_task_path(task_path: str) -> str:
+    """Extracts e.g. 'drone11' from '.../problem_drone11.pddl', or
+    'expedition7' from '.../problem_expedition7.pddl'."""
+    base = os.path.basename(task_path)
+    m = re.search(r"problem_([a-zA-Z]+\d+)\.pddl$", base)
+    if not m:
+        raise ValueError(
+            f"could not extract instance name from task filename '{base}' "
+            f"-- expected a pattern like 'problem_drone11.pddl'"
+        )
+    return m.group(1)
+
+ALL_BETA = {
+        "drone1":  {"battery-level": (0, 9),  "x": (0, 0), "y": (0, 0), "z": (0, 1)},
+        "drone2":  {"battery-level": (0, 13), "x": (0, 0), "y": (0, 0), "z": (0, 3)},
+        "drone3":  {"battery-level": (0, 21), "x": (0, 0), "y": (0, 7), "z": (0, 0)},
+        "drone4":  {"battery-level": (0, 23), "x": (0, 7), "y": (0, 0), "z": (0, 1)},
+        "drone5":  {"battery-level": (0, 25), "x": (0, 1), "y": (0, 8), "z": (0, 0)},
+        "drone6":  {"battery-level": (0, 19), "x": (0, 4), "y": (0, 1), "z": (0, 1)},
+        "drone7":  {"battery-level": (0, 27), "x": (0, 0), "y": (0, 8), "z": (0, 2)},
+        "drone8":  {"battery-level": (0, 27), "x": (0, 7), "y": (0, 0), "z": (0, 3)},
+        "drone9":  {"battery-level": (0, 21), "x": (0, 2), "y": (0, 2), "z": (0, 3)},
+        "drone10": {"battery-level": (0, 29), "x": (0, 7), "y": (0, 0), "z": (0, 4)},
+        "drone11": {"battery-level": (0, 23), "x": (0, 1), "y": (0, 4), "z": (0, 3)},
+        "drone12": {"battery-level": (0, 23), "x": (0, 3), "y": (0, 1), "z": (0, 4)},
+        "drone13": {"battery-level": (0, 31), "x": (0, 5), "y": (0, 7), "z": (0, 0)},
+        "drone14": {"battery-level": (0, 27), "x": (0, 1), "y": (0, 7), "z": (0, 2)},
+        "drone15": {"battery-level": (0, 33), "x": (0, 4), "y": (0, 9), "z": (0, 0)},
+        "drone16": {"battery-level": (0, 33), "x": (0, 7), "y": (0, 6), "z": (0, 0)},
+        "drone17": {"battery-level": (0, 35), "x": (0, 6), "y": (0, 5), "z": (0, 3)},
+        "drone18": {"battery-level": (0, 37), "x": (0, 3), "y": (0, 8), "z": (0, 4)},
+        "drone19": {"battery-level": (0, 39), "x": (0, 8), "y": (0, 6), "z": (0, 2)},
+        "drone20": {"battery-level": (0, 47), "x": (0, 9), "y": (0, 9), "z": (0, 2)},
+        "expedition1":  {0: (0, 4), 1: (0, 4), 2: (0, 1000), 3: (0, 10), 4: (0, 10), 5: (0, 10), 6: (0, 10), 7: (0, 10)},
+        "expedition2":  {0: (0, 4), 1: (0, 4), 2: (0, 1000), 3: (0, 10), 4: (0, 10), 5: (0, 10), 6: (0, 10), 7: (0, 10), 8: (0, 10)},
+        "expedition3":  {0: (0, 4), 1: (0, 4), 2: (0, 1000), 3: (0, 10), 4: (0, 10), 5: (0, 10), 6: (0, 10), 7: (0, 10), 8: (0, 10), 9: (0, 10)},
+        "expedition4":  {0: (0, 4), 1: (0, 4), 2: (0, 1000), 3: (0, 10), 4: (0, 10), 5: (0, 10), 6: (0, 10), 7: (0, 10), 8: (0, 10), 9: (0, 10), 10: (0, 10)},
+        "expedition5":  {0: (0, 4), 1: (0, 4), 2: (0, 1000), 3: (0, 10), 4: (0, 10), 5: (0, 10), 6: (0, 10), 7: (0, 10), 8: (0, 10), 9: (0, 10), 10: (0, 10), 11: (0, 10)},
+        "expedition6":  {0: (0, 4), 1: (0, 4), 2: (0, 1000), 3: (0, 10), 4: (0, 10), 5: (0, 10), 6: (0, 10), 7: (0, 10), 8: (0, 10), 9: (0, 10), 10: (0, 10), 11: (0, 10), 12: (0, 10)},
+        "expedition7":  {0: (0, 4), 1: (0, 4), 2: (0, 1000), 3: (0, 10), 4: (0, 10), 5: (0, 10), 6: (0, 10), 7: (0, 10), 8: (0, 1000), 9: (0, 10), 10: (0, 10), 11: (0, 10), 12: (0, 10), 13: (0, 10)},
+        "expedition8":  {0: (0, 4), 1: (0, 4), 2: (0, 1000), 3: (0, 10), 4: (0, 10), 5: (0, 10), 6: (0, 10), 7: (0, 10), 8: (0, 10), 9: (0, 10), 10: (0, 10), 11: (0, 10), 12: (0, 10), 13: (0, 10)},
+        "expedition9":  {0: (0, 4), 1: (0, 4), 2: (0, 1000), 3: (0, 10), 4: (0, 10), 5: (0, 10), 6: (0, 10), 7: (0, 10), 8: (0, 10), 9: (0, 10), 10: (0, 10), 11: (0, 10), 12: (0, 10), 13: (0, 10), 14: (0, 10)},
+        "expedition10": {0: (0, 4), 1: (0, 4), 2: (0, 1000), 3: (0, 10), 4: (0, 10), 5: (0, 10), 6: (0, 10), 7: (0, 10), 8: (0, 10), 9: (0, 1000), 10: (0, 10), 11: (0, 10), 12: (0, 10), 13: (0, 10), 14: (0, 10), 15: (0, 10)},
+        "expedition11": {0: (0, 4), 1: (0, 4), 2: (0, 1000), 3: (0, 10), 4: (0, 10), 5: (0, 10), 6: (0, 10), 7: (0, 10), 8: (0, 10), 9: (0, 10), 10: (0, 10), 11: (0, 10), 12: (0, 10), 13: (0, 10), 14: (0, 10), 15: (0, 10)},
+        "expedition12": {0: (0, 4), 1: (0, 4), 2: (0, 1000), 3: (0, 10), 4: (0, 10), 5: (0, 10), 6: (0, 10), 7: (0, 10), 8: (0, 10), 9: (0, 10), 10: (0, 10), 11: (0, 10), 12: (0, 10), 13: (0, 10), 14: (0, 10), 15: (0, 10), 16: (0, 10)},
+        "expedition13": {0: (0, 4), 1: (0, 4), 2: (0, 1000), 3: (0, 10), 4: (0, 10), 5: (0, 10), 6: (0, 10), 7: (0, 10), 8: (0, 10), 9: (0, 10), 10: (0, 1000), 11: (0, 10), 12: (0, 10), 13: (0, 10), 14: (0, 10), 15: (0, 10), 16: (0, 10), 17: (0, 10)},
+        "expedition14": {0: (0, 4), 1: (0, 4), 2: (0, 1000), 3: (0, 10), 4: (0, 10), 5: (0, 10), 6: (0, 10), 7: (0, 10), 8: (0, 10), 9: (0, 10), 10: (0, 10), 11: (0, 1000), 12: (0, 10), 13: (0, 10), 14: (0, 10), 15: (0, 10), 16: (0, 10), 17: (0, 10), 18: (0, 10), 19: (0, 10)},
+        "expedition15": {0: (0, 4), 1: (0, 4), 2: (0, 1000), 3: (0, 10), 4: (0, 10), 5: (0, 10), 6: (0, 10), 7: (0, 10), 8: (0, 10), 9: (0, 10), 10: (0, 10), 11: (0, 10), 12: (0, 1000), 13: (0, 10), 14: (0, 10), 15: (0, 10), 16: (0, 10), 17: (0, 10), 18: (0, 10), 19: (0, 10), 20: (0, 10), 21: (0, 10)},
+        "expedition16": {0: (0, 4), 1: (0, 4), 2: (0, 1000), 3: (0, 10), 4: (0, 10), 5: (0, 10), 6: (0, 10), 7: (0, 10), 8: (0, 10), 9: (0, 10), 10: (0, 10), 11: (0, 10), 12: (0, 10), 13: (0, 1000), 14: (0, 10), 15: (0, 10), 16: (0, 10), 17: (0, 10), 18: (0, 10), 19: (0, 10), 20: (0, 10), 21: (0, 10), 22: (0, 10), 23: (0, 10)},
+        "expedition17": {0: (0, 4), 1: (0, 4), 2: (0, 1000), 3: (0, 10), 4: (0, 10), 5: (0, 10), 6: (0, 10), 7: (0, 10), 8: (0, 10), 9: (0, 10), 10: (0, 10), 11: (0, 10), 12: (0, 10), 13: (0, 10), 14: (0, 1000), 15: (0, 10), 16: (0, 10), 17: (0, 10), 18: (0, 10), 19: (0, 10), 20: (0, 10), 21: (0, 10), 22: (0, 10), 23: (0, 10), 24: (0, 10), 25: (0, 10)},
+        "expedition18": {0: (0, 4), 1: (0, 4), 2: (0, 1000), 3: (0, 10), 4: (0, 10), 5: (0, 10), 6: (0, 10), 7: (0, 10), 8: (0, 10), 9: (0, 10), 10: (0, 10), 11: (0, 10), 12: (0, 10), 13: (0, 10), 14: (0, 10), 15: (0, 1000), 16: (0, 10), 17: (0, 10), 18: (0, 10), 19: (0, 10), 20: (0, 10), 21: (0, 10), 22: (0, 10), 23: (0, 10), 24: (0, 10), 25: (0, 10), 26: (0, 10), 27: (0, 10)},
+        "expedition19": {0: (0, 4), 1: (0, 4), 2: (0, 1000), 3: (0, 10), 4: (0, 10), 5: (0, 10), 6: (0, 10), 7: (0, 10), 8: (0, 10), 9: (0, 10), 10: (0, 10), 11: (0, 10), 12: (0, 10), 13: (0, 10), 14: (0, 10), 15: (0, 10), 16: (0, 1000), 17: (0, 10), 18: (0, 10), 19: (0, 10), 20: (0, 10), 21: (0, 10), 22: (0, 10), 23: (0, 10), 24: (0, 10), 25: (0, 10), 26: (0, 10), 27: (0, 10), 28: (0, 10), 29: (0, 10)},
+        "expedition20": {0: (0, 4), 1: (0, 4), 2: (0, 1000), 3: (0, 10), 4: (0, 10), 5: (0, 10), 6: (0, 10), 7: (0, 10), 8: (0, 10), 9: (0, 10), 10: (0, 10), 11: (0, 10), 12: (0, 10), 13: (0, 10), 14: (0, 10), 15: (0, 10), 16: (0, 10), 17: (0, 1000), 18: (0, 10), 19: (0, 10), 20: (0, 10), 21: (0, 10), 22: (0, 10), 23: (0, 10), 24: (0, 10), 25: (0, 10), 26: (0, 10), 27: (0, 10), 28: (0, 10), 29: (0, 10), 30: (0, 10), 31: (0, 10)},
+    }
+def process_instance(domain_path: str, task_path: str):
+    """Runs the full pipeline for one domain/problem pair."""
+    instance_name = instance_name_from_task_path(task_path)
+    if instance_name not in ALL_BETA:
+        print(f"  SKIP {instance_name}: no bounds registered")
+        return
     timer = timers.Timer()
     with timers.timing("Parsing", True):
         task = pddl_parser.open(
-            domain_filename=options.domain, task_filename=options.task
-        )
-    #     print("translate.main(): task parsed\n Function symbols:")
-    #     for fs in task.FUNCTION_SYMBOLS:
-    #         print (fs)
-    #     print("task is:")
-    #     task.dump()
+            domain_filename=domain_path, task_filename=task_path
+    )
     with timers.timing("Handling Global Constraints"):
         task.add_global_constraints()
 
     with timers.timing("Normalizing task"):
         normalize.normalize(task)
-    #     print("translate.main(): Function symbols after normalization:")
-    #     for fs in task.FUNCTION_SYMBOLS:
-    #         print (fs)
-    #     print("task is:")
-    #     task.dump()
-    #     assert False
 
     if options.generate_relaxed_task:
         # Remove delete effects.
@@ -1332,41 +1383,40 @@ def main():
             # sas_task.output(output_file)
             sas_task.output(output_file)
     dump_statistics(sas_task)
-    #    for operator in sas_task.operators:
-    #        print("Operatorname = %s" % operator.name)
-    #     print("Dumping axioms in task before writing output ")
-    #     for axiom in sas_task.axioms:
-    #         axiom.dump()
-    #         avar, aval = axiom.effect
-    #         print("Effect state value init: %s axiomresult: %s" % (avar,aval))
-    #         print("Init = %s" % [sas_task.init.values[avar]])
-    ir_task = IRTask(sas_task)
 
-    beta_by_name_drone1  = {"battery-level": (0, 9),  "x": (0, 0), "y": (0, 0), "z": (0, 1)}
-    beta_by_name_drone2  = {"battery-level": (0, 13), "x": (0, 0), "y": (0, 0), "z": (0, 3)}
-    beta_by_name_drone3  = {"battery-level": (0, 21), "x": (0, 0), "y": (0, 7), "z": (0, 0)}
-    beta_by_name_drone4  = {"battery-level": (0, 23), "x": (0, 7), "y": (0, 0), "z": (0, 1)}
-    beta_by_name_drone5  = {"battery-level": (0, 25), "x": (0, 1), "y": (0, 8), "z": (0, 0)}
-    beta_by_name_drone6  = {"battery-level": (0, 19), "x": (0, 4), "y": (0, 1), "z": (0, 1)}
-    beta_by_name_drone7  = {"battery-level": (0, 27), "x": (0, 0), "y": (0, 8), "z": (0, 2)}
-    beta_by_name_drone8  = {"battery-level": (0, 27), "x": (0, 7), "y": (0, 0), "z": (0, 3)}
-    beta_by_name_drone9  = {"battery-level": (0, 21), "x": (0, 2), "y": (0, 2), "z": (0, 3)}
-    beta_by_name_drone10 = {"battery-level": (0, 29), "x": (0, 7), "y": (0, 0), "z": (0, 4)}
-    beta_by_name_drone11 = {"battery-level": (0, 23), "x": (0, 1), "y": (0, 4), "z": (0, 3)}
-    beta_by_name_drone12 = {"battery-level": (0, 23), "x": (0, 3), "y": (0, 1), "z": (0, 4)}
-    beta_by_name_drone13 = {"battery-level": (0, 31), "x": (0, 5), "y": (0, 7), "z": (0, 0)}
-    beta_by_name_drone14 = {"battery-level": (0, 27), "x": (0, 1), "y": (0, 7), "z": (0, 2)}
-    beta_by_name_drone15 = {"battery-level": (0, 33), "x": (0, 4), "y": (0, 9), "z": (0, 0)}
-    beta_by_name_drone16 = {"battery-level": (0, 33), "x": (0, 7), "y": (0, 6), "z": (0, 0)}
-    beta_by_name_drone17 = {"battery-level": (0, 35), "x": (0, 6), "y": (0, 5), "z": (0, 3)}
-    beta_by_name_drone18 = {"battery-level": (0, 37), "x": (0, 3), "y": (0, 8), "z": (0, 4)}
-    beta_by_name_drone19 = {"battery-level": (0, 39), "x": (0, 8), "y": (0, 6), "z": (0, 2)}
-    beta_by_name_drone20 = {"battery-level": (0, 47), "x": (0, 9), "y": (0, 9), "z": (0, 2)}
-    
-    classical_task = compile_ir_task(ir_task, beta_by_name_drone4)
-    with open("output_classical.sas", "w") as f:
+    ir_task = IRTask(sas_task)
+    beta_by_name = ALL_BETA[instance_name]
+    try:
+        classical_task = compile_ir_task(ir_task, beta_by_name)
+    except Exception as e:
+        print(f"  FAILED {instance_name}: {e}")
+        return
+
+    out_path = f"output_classical_{instance_name}.sas"
+    with open(out_path, "w") as f:
         classical_task.output(f)
-    print("Done! %s" % timer)
+
+    print(f"  OK {instance_name}: {len(classical_task.operators)} operators "
+          f"-> {out_path}  ({timer})")
+
+def main():
     
+    domain_drone = "../../domain_drone.pddl"
+    for i in range(1, 21):
+        task_path = f"../../problem_drone{i}.pddl"
+        if os.path.exists(task_path):
+            process_instance(domain_drone, task_path)
+        else:
+            print(f"  SKIP drone{i}: {task_path} not found")
+
+    domain_expedition = "../../domain_expedition.pddl"
+    for i in range(1, 21):
+        task_path = f"../../problem_expedition{i}.pddl"
+        if os.path.exists(task_path):
+            process_instance(domain_expedition, task_path)
+        else:
+            print(f"  SKIP expedition{i}: {task_path} not found")
+
+
 if __name__ == "__main__":
     main()
