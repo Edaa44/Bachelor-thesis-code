@@ -20,35 +20,13 @@ solvable by any standard classical planner such as
  ## Requirements
 
 - Python 3.10+
-- CMake and a C++ build toolchain (for the numeric translator's compiled components)
 - A classical planner capable of reading plain SAS+ input, e.g. [Fast Downward](https://www.fast-downward.org/) (built separately; not included in this repository)
-
-## Compile
-
-Install CPLEX Optimization Studio 22.1.1 in `/opt/ibm/ILOG/CPLEX_Studio2211`.
-Then, run the script with the root privilege.
-
-```bash
-./compile
-```
 
 ## Usage
 
-From `/translate`:
-
-### Single instance
-
-```bash
-python3 translate.py <domain.pddl> <problem.pddl>
-```
-
-Parses the given numeric PDDL domain and problem, translates them into
-a numeric SAS+ task, and compiles the result into a classical SAS+
-task, written to `output_classical_<instance>.sas`. This is the mode
-used when running on a grid/cluster, where each job translates exactly
-one instance.
 
 ### Batch (all registered instances)
+on path src/translate
 
 ```bash
 python3 translate.py
@@ -62,22 +40,37 @@ testing of the full benchmark set without submitting a batch job.
 
 Example domain/problem pairs are provided in `instances/`.
 
-## Solving the Output
 
-Run_pipeline.py
+## How the pipeline runs the classical search
 
-to be completed
+`run_pipeline.py` handles the entire process end to end for a single
+instance: it translates the numeric PDDL task, then automatically
+pipes the resulting classical SAS+ task into Fast Downward's search
+component and records the result. You do not need to invoke the
+search binary yourself — running
 
+```bash
+python3 run_pipeline.py drone1
+```
 
-To solve the resulting classical task, pipe it into a classical
-planner's search component, e.g.:
+performs translation and search in one step, writing
+`output_classical_drone1.sas`, `sas_plan_drone1`, and
+`results/drone1.json`.
+
+Internally, this is equivalent to running:
 
 ```bash
 /path/to/fast-downward/builds/release/bin/downward \
     --search "astar(blind())" \
-    --internal-plan-file sas_plan \
-    < output_classical_<instance>.sas
+    --internal-plan-file sas_plan_drone1 \
+    < output_classical_drone1.sas
 ```
+**Output:** `run_pipeline.py` automatically parses the search
+binary's stdout and records status (`solved`/`unsolvable`/`timeout`),
+search time, peak memory, states expanded, and plan length into
+`results/<instance>.json`. Running `report.py` afterward consolidates
+these across every evaluated instance into `results.csv`, a summary
+table, and scaling plots.
 
 ## Notes
 
