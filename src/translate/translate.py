@@ -1397,10 +1397,14 @@ def process_instance(domain_path: str, task_path: str):
           f"-> {out_path}  ({timer})")
 
 def main():
-    
-    domain_drone = "instances/domain_drone.pddl"
-    for i in range(1, 21):
-        task_path = f"instances/problem_drone{i}.pddl"
+    if options.domain and options.task:
+        # single-instance mode: python3 translate.py domain.pddl problem.pddl
+        # used by run_one.py / Lab / the grid array job
+        process_instance(options.domain, options.task)
+    else:
+        domain_drone = "instances/domain_drone.pddl"
+        for i in range(1, 21):
+            task_path = f"instances/problem_drone{i}.pddl"
         if os.path.exists(task_path):
             process_instance(domain_drone, task_path)
         else:
