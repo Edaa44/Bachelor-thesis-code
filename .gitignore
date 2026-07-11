@@ -1,0 +1,6 @@
+output_classical_*.sas
+sas_plan_*
+result_*.txt
+*.pyc
+__pycache__/
+output_original.sas
