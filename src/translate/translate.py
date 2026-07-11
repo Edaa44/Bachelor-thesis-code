@@ -1351,11 +1351,12 @@ ALL_BETA = {
         "expedition20": {0: (0, 4), 1: (0, 4), 2: (0, 1000), 3: (0, 10), 4: (0, 10), 5: (0, 10), 6: (0, 10), 7: (0, 10), 8: (0, 10), 9: (0, 10), 10: (0, 10), 11: (0, 10), 12: (0, 10), 13: (0, 10), 14: (0, 10), 15: (0, 10), 16: (0, 10), 17: (0, 1000), 18: (0, 10), 19: (0, 10), 20: (0, 10), 21: (0, 10), 22: (0, 10), 23: (0, 10), 24: (0, 10), 25: (0, 10), 26: (0, 10), 27: (0, 10), 28: (0, 10), 29: (0, 10), 30: (0, 10), 31: (0, 10)},
     }
 def process_instance(domain_path: str, task_path: str):
-    """Runs the full pipeline for one domain/problem pair."""
+    """Runs the full pipeline for one domain/problem pair.
+    Returns a dict of stats, or None if the instance was skipped/failed."""
     instance_name = instance_name_from_task_path(task_path)
     if instance_name not in ALL_BETA:
         print(f"  SKIP {instance_name}: no bounds registered")
-        return
+        return None
     timer = timers.Timer()
     with timers.timing("Parsing", True):
         task = pddl_parser.open(
@@ -1377,7 +1378,6 @@ def process_instance(domain_path: str, task_path: str):
     sas_task = pddl_to_sas(task)
     with timers.timing("Writing output"):
         with open("output_original.sas", "w") as output_file:
-            # sas_task.output(output_file)
             sas_task.output(output_file)
     dump_statistics(sas_task)
 
@@ -1387,7 +1387,8 @@ def process_instance(domain_path: str, task_path: str):
         classical_task = compile_ir_task(ir_task, beta_by_name)
     except Exception as e:
         print(f"  FAILED {instance_name}: {e}")
-        return
+        return {"instance": instance_name, "translate_status": "failed",
+                "translate_error": str(e)}
 
     out_path = f"output_classical_{instance_name}.sas"
     with open(out_path, "w") as f:
@@ -1396,6 +1397,16 @@ def process_instance(domain_path: str, task_path: str):
     print(f"  OK {instance_name}: {len(classical_task.operators)} operators "
           f"-> {out_path}  ({timer})")
 
+    return {
+        "instance": instance_name,
+        "translate_status": "ok",
+        "n_prop_vars_raw": len(sas_task.variables.ranges),
+        "n_num_vars_raw": sas_task.numeric_variables.num(),
+        "n_actions_ungrounded": len(sas_task.operators),
+        "n_prop_vars": ir_task.sas_variables.num(),
+        "n_num_vars": ir_task.numeric_variables.num(),
+        "n_operators_grounded": len(classical_task.operators),
+    }
 def main():
     if options.domain and options.task:
         # single-instance mode: python3 translate.py domain.pddl problem.pddl
