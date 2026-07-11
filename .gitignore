@@ -4,3 +4,6 @@ result_*.txt
 *.pyc
 __pycache__/
 output_original.sas
+driver/*.pyc
+builds/
+*.o
