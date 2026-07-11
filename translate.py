@@ -1401,17 +1401,17 @@ def process_instance(domain_path: str, task_path: str):
 
 def main():
     
-    domain_drone = "../../domain_drone.pddl"
+    domain_drone = "instances/domain_drone.pddl"
     for i in range(1, 21):
-        task_path = f"../../problem_drone{i}.pddl"
+        task_path = f"instances/problem_drone{i}.pddl"
         if os.path.exists(task_path):
             process_instance(domain_drone, task_path)
         else:
             print(f"  SKIP drone{i}: {task_path} not found")
 
-    domain_expedition = "../../domain_expedition.pddl"
+    domain_expedition = "instances/domain_expedition.pddl"
     for i in range(1, 21):
-        task_path = f"../../problem_expedition{i}.pddl"
+        task_path = f"instances/problem_expedition{i}.pddl"
         if os.path.exists(task_path):
             process_instance(domain_expedition, task_path)
         else:
