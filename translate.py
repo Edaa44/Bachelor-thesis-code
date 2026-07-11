@@ -4,7 +4,6 @@
 
 from curses import raw
 import sys
-sys.argv[1:] = ["dummy_domain.pddl", "dummy_task.pddl"]
 import os
 import re
 from pathlib import Path
@@ -1298,7 +1297,6 @@ def dump_statistics(sas_task):
     else:
         print("Translator peak memory: %d KB" % peak_memory)
 
-
 def instance_name_from_task_path(task_path: str) -> str:
     """Extracts e.g. 'drone11' from '.../problem_drone11.pddl', or
     'expedition7' from '.../problem_expedition7.pddl'."""
@@ -1310,7 +1308,6 @@ def instance_name_from_task_path(task_path: str) -> str:
             f"-- expected a pattern like 'problem_drone11.pddl'"
         )
     return m.group(1)
-
 ALL_BETA = {
         "drone1":  {"battery-level": (0, 9),  "x": (0, 0), "y": (0, 0), "z": (0, 1)},
         "drone2":  {"battery-level": (0, 13), "x": (0, 0), "y": (0, 0), "z": (0, 3)},
