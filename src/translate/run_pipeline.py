@@ -11,12 +11,12 @@ import os
 
 from translate import process_instance, ALL_BETA, instance_name_from_task_path
 
-#DOWNWARD_BIN = "/mnt/c/Users/edaer/bachelor/fast-downward/builds/release/bin/downward" #absolute path to downward, in this case wsl path
-DOWNWARD_BIN = os.environ.get(
-    "DOWNWARD_BIN",
-    "/infai/erkek0000/downward/builds/release/bin/downward",
-)
-TIME_LIMIT_S = 1800
+DOWNWARD_BIN = "/mnt/c/Users/edaer/bachelor/fast-downward/builds/release/bin/downward" #absolute path to downward, in this case wsl path
+#DOWNWARD_BIN = os.environ.get(
+    ##"DOWNWARD_BIN",
+    #"/infai/erkek0000/downward/builds/release/bin/downward",
+#)
+TIME_LIMIT_S = 9999
 
 os.makedirs("results", exist_ok=True)
 
