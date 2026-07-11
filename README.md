@@ -72,6 +72,10 @@ search time, peak memory, states expanded, and plan length into
 these across every evaluated instance into `results.csv`, a summary
 table, and scaling plots.
 
+**Search configuration:** `astar(blind())` performs optimal A\* search
+using the blind heuristic --- the simplest admissible heuristic,
+giving A\* no guidance beyond the task's own structure.
+
 ## Notes
 
 Numeric variable bounds must be supplied manually per instance (see
